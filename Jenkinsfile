@@ -25,7 +25,25 @@ pipeline {
                         success = false
                     }
 
-                    publishChecks name: 'Docker Build', title: 'Docker Build Result', summary: success ? '✅ Build succeeded' : '❌ Build failed', text: "```\n${output.take(60000)}\n```", conclusion: success ? 'SUCCESS' : 'FAILURE'
+                    // Sanitize output and provide fallback if empty
+                    def cleanOutput = output ?: "⚠️ No output captured from docker build."
+
+                    // Escape backticks if any
+                    cleanOutput = cleanOutput.replaceAll('```', '\\`\\`\\`')
+
+                    publishChecks(
+                        name: 'Docker Build',
+                        title: 'Docker Build Result',
+                        summary: success ? '✅ Build succeeded' : '❌ Build failed',
+                        text: """### Docker Build Output
+
+\`\`\`
+${cleanOutput}
+\`\`\`
+""",
+                        conclusion: success ? 'SUCCESS' : 'FAILURE',
+                        detailsURL: "${env.BUILD_URL}"
+                    )
 
                     if (!success) {
                         error("Build failed")
