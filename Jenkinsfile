@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "go-app"
+        IMAGE_TAG = "latest"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,10 +13,10 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("go-app")
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
@@ -19,16 +24,16 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo '🧹 Cleaning up Docker image...'
             script {
-                sh 'docker rmi go-app || true'
+                sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
             }
         }
         success {
-            echo 'Build succeeded!'
+            echo '✅ Build succeeded!'
         }
         failure {
-            echo 'Build failed!'
+            echo '❌ Build failed!'
         }
     }
 }
