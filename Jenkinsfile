@@ -10,8 +10,9 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'go version'
-                sh 'go build -o app .'
+                script {
+                    docker.build("go-app")
+                }
             }
         }
     }
@@ -19,7 +20,9 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'rm -f app'
+            script {
+                sh 'docker rmi go-app || true'
+            }
         }
         success {
             echo 'Build succeeded!'
