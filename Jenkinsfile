@@ -25,22 +25,14 @@ pipeline {
                         success = false
                     }
 
-                    // Sanitize output and provide fallback if empty
                     def cleanOutput = output ?: "⚠️ No output captured from docker build."
-
-                    // Escape backticks if any
-                    cleanOutput = cleanOutput.replaceAll('```', '\\`\\`\\`')
+                    cleanOutput = cleanOutput.replaceAll('```', '---') // Prevent breaking Markdown
 
                     publishChecks(
                         name: 'Docker Build',
                         title: 'Docker Build Result',
                         summary: success ? '✅ Build succeeded' : '❌ Build failed',
-                        text: """### Docker Build Output
-
-\`\`\`
-${cleanOutput}
-\`\`\`
-""",
+                        text: """\n```\n${cleanOutput}\n```\n""",
                         conclusion: success ? 'SUCCESS' : 'FAILURE',
                         detailsURL: "${env.BUILD_URL}"
                     )
