@@ -1,5 +1,3 @@
-import org.jenkinsci.plugins.github.checks.*
-
 pipeline {
     agent any
 
@@ -18,14 +16,20 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def logOutput = ''
+                    def result = ''
+                    def success = true
                     try {
-                        logOutput = sh(script: "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .", returnStdout: true)
-                        publishChecks("Build Docker Image", logOutput, true)
-                    } catch (err) {
-                        logOutput = err.getMessage()
-                        publishChecks("Build Docker Image", logOutput, false)
-                        error "Build failed"
+                        result = sh(script: "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .", returnStdout: true).trim()
+                    } catch (e) {
+                        result = e.getMessage()
+                        success = false
+                    }
+
+                    // Publish the GitHub Check
+                    githubChecks name: 'Docker Build', summary: success ? 'Build successful ✅' : 'Build failed ❌', text: "```\n${result.take(60000)}\n```", status: 'COMPLETED', conclusion: success ? 'SUCCESS' : 'FAILURE'
+
+                    if (!success) {
+                        error("Docker build failed")
                     }
                 }
             }
@@ -46,16 +50,4 @@ pipeline {
             echo '❌ Build failed!'
         }
     }
-}
-
-// Publish GitHub Checks (no library required)
-def publishChecks(String title, String logText, boolean isSuccess) {
-    def checksDetails = new ChecksDetails()
-    checksDetails.setName("Jenkins Build Log")
-    checksDetails.setStatus(ChecksStatus.COMPLETED)
-    checksDetails.setConclusion(isSuccess ? ChecksConclusion.SUCCESS : ChecksConclusion.FAILURE)
-    checksDetails.setOutput(new ChecksOutput(title, "```${logText.take(60000)}```"))
-
-    def publisher = new ChecksPublisher()
-    publisher.publish(checksDetails)
 }
