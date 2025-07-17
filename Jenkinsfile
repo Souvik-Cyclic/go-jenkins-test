@@ -1,5 +1,3 @@
-@Library('github-checks') _  
-
 import org.jenkinsci.plugins.github.checks.*
 
 pipeline {
@@ -50,6 +48,7 @@ pipeline {
     }
 }
 
+// Publish GitHub Checks (no library required)
 def publishChecks(String title, String logText, boolean isSuccess) {
     def checksDetails = new ChecksDetails()
     checksDetails.setName("Jenkins Build Log")
