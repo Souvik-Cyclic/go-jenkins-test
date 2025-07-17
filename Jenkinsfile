@@ -21,7 +21,7 @@ pipeline {
 
                     try {
                         echo 'Starting Docker build...'
-                        // Capture both stdout and stderr
+                        // Capture both stdout and stderr from docker build
                         output = sh(script: "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} . 2>&1", returnStdout: true).trim()
                         echo 'Docker build completed.'
                     } catch (err) {
@@ -30,20 +30,15 @@ pipeline {
                     }
 
                     def cleanOutput = output ?: "⚠️ No output captured from docker build."
-                    cleanOutput = cleanOutput.replaceAll('```', '---') // Sanitize Markdown backticks
+                    cleanOutput = cleanOutput.replaceAll('```', '---') // Avoid breaking Markdown formatting
 
-                    // Publish GitHub check with build output
                     publishChecks(
                         name: 'Docker Build',
                         title: 'Docker Build Result',
                         summary: success ? '✅ Build succeeded' : '❌ Build failed',
-                        text: """
-### Docker Build Output
+                        text: """### Docker Build Output
 
-\`\`\`
 ${cleanOutput.take(60000)}
-\`\`\`
-
 """,
                         conclusion: success ? 'SUCCESS' : 'FAILURE',
                         detailsURL: "${env.BUILD_URL}"
